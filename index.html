@@ -13,10 +13,11 @@
     .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
     .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
     :root {
-      --clr: #f97316;
-      --clr-dark: #ea580c;
-      --clr-light: #fff7ed;
-      --clr-ring: #fb923c;
+      --clr: #6b2155;
+      --clr-dark: #4a1040;
+      --clr-light: #fdf4fb;
+      --clr-ring: #a855a0;
+      --clr-gradient: linear-gradient(135deg, #6b2155 0%, #4a1040 40%, #2d0a35 70%, #1a0520 100%);
     }
     .btn-primary { background: var(--clr) !important; color: #fff !important; }
     .btn-primary:hover { background: var(--clr-dark) !important; }
@@ -28,6 +29,16 @@
     .bg-theme { background: var(--clr) !important; }
     .bg-theme-light { background: var(--clr-light) !important; }
     .step-num { background: var(--clr) !important; }
+    /* Shimmer overlay on header */
+    .header-shimmer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.06) 50%, transparent 60%);
+      background-size: 200% 100%;
+      animation: shimmer 3s infinite;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
   </style>
 </head>
 <body class="bg-slate-50">
@@ -42,17 +53,27 @@ const ROLE_KEY    = "hubspot_hub_role";
 const THEME_KEY   = "hubspot_theme";
 const SITE_KEY    = "hubspot_site_settings";
 const DEF_IMAGE   = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80";
-const getAutoImage = (title, bg="f97316") => `https://ui-avatars.com/api/?name=${encodeURIComponent(title||"HubSpot")}&size=800&background=${bg}&color=fff&bold=true&format=png&length=2`;
+const getAutoImage = (title, bg="6b2155") => `https://ui-avatars.com/api/?name=${encodeURIComponent(title||"HubSpot")}&size=800&background=${bg}&color=fff&bold=true&format=png&length=2`;
 
 const THEMES = [
-  { id:"orange",  label:"🟠 Orange",  primary:"#f97316", dark:"#ea580c", light:"#fff7ed", ring:"#fb923c", badge:"bg-orange-500",  header:"from-orange-500 via-orange-600 to-red-600" },
-  { id:"blue",    label:"🔵 Blue",    primary:"#3b82f6", dark:"#2563eb", light:"#eff6ff", ring:"#60a5fa", badge:"bg-blue-500",    header:"from-blue-500 via-blue-600 to-blue-700" },
-  { id:"purple",  label:"🟣 Purple",  primary:"#8b5cf6", dark:"#7c3aed", light:"#f5f3ff", ring:"#a78bfa", badge:"bg-violet-500",  header:"from-violet-500 via-purple-600 to-purple-700" },
-  { id:"green",   label:"🟢 Green",   primary:"#10b981", dark:"#059669", light:"#ecfdf5", ring:"#34d399", badge:"bg-emerald-500", header:"from-emerald-500 via-emerald-600 to-teal-600" },
-  { id:"rose",    label:"🌸 Rose",    primary:"#f43f5e", dark:"#e11d48", light:"#fff1f2", ring:"#fb7185", badge:"bg-rose-500",    header:"from-rose-500 via-rose-600 to-pink-600" },
-  { id:"slate",   label:"⚫ Slate",   primary:"#475569", dark:"#334155", light:"#f8fafc", ring:"#64748b", badge:"bg-slate-500",   header:"from-slate-600 via-slate-700 to-slate-800" },
-  { id:"amber",   label:"🟡 Amber",   primary:"#f59e0b", dark:"#d97706", light:"#fffbeb", ring:"#fbbf24", badge:"bg-amber-500",   header:"from-amber-500 via-amber-600 to-orange-600" },
-  { id:"cyan",    label:"🩵 Cyan",    primary:"#06b6d4", dark:"#0891b2", light:"#ecfeff", ring:"#22d3ee", badge:"bg-cyan-500",    header:"from-cyan-500 via-cyan-600 to-blue-600" },
+  { id:"plum",    label:"🍇 Plum",    primary:"#6b2155", dark:"#4a1040", light:"#fdf4fb", ring:"#a855a0",
+    gradient:"linear-gradient(135deg, #6b2155 0%, #4a1040 40%, #2d0a35 70%, #1a0520 100%)" },
+  { id:"orange",  label:"🟠 Orange",  primary:"#f97316", dark:"#ea580c", light:"#fff7ed", ring:"#fb923c",
+    gradient:"linear-gradient(135deg, #fbbf24 0%, #f97316 35%, #ea580c 65%, #dc2626 100%)" },
+  { id:"blue",    label:"🔵 Blue",    primary:"#3b82f6", dark:"#2563eb", light:"#eff6ff", ring:"#60a5fa",
+    gradient:"linear-gradient(135deg, #60a5fa 0%, #3b82f6 35%, #2563eb 65%, #1d4ed8 100%)" },
+  { id:"purple",  label:"🟣 Purple",  primary:"#8b5cf6", dark:"#7c3aed", light:"#f5f3ff", ring:"#a78bfa",
+    gradient:"linear-gradient(135deg, #c084fc 0%, #8b5cf6 35%, #7c3aed 65%, #6d28d9 100%)" },
+  { id:"green",   label:"🟢 Green",   primary:"#10b981", dark:"#059669", light:"#ecfdf5", ring:"#34d399",
+    gradient:"linear-gradient(135deg, #34d399 0%, #10b981 35%, #059669 65%, #047857 100%)" },
+  { id:"rose",    label:"🌸 Rose",    primary:"#f43f5e", dark:"#e11d48", light:"#fff1f2", ring:"#fb7185",
+    gradient:"linear-gradient(135deg, #fb7185 0%, #f43f5e 35%, #e11d48 65%, #be123c 100%)" },
+  { id:"slate",   label:"⚫ Slate",   primary:"#475569", dark:"#334155", light:"#f8fafc", ring:"#64748b",
+    gradient:"linear-gradient(135deg, #64748b 0%, #475569 35%, #334155 65%, #1e293b 100%)" },
+  { id:"amber",   label:"🟡 Amber",   primary:"#f59e0b", dark:"#d97706", light:"#fffbeb", ring:"#fbbf24",
+    gradient:"linear-gradient(135deg, #fde68a 0%, #f59e0b 35%, #d97706 65%, #b45309 100%)" },
+  { id:"cyan",    label:"🩵 Cyan",    primary:"#06b6d4", dark:"#0891b2", light:"#ecfeff", ring:"#22d3ee",
+    gradient:"linear-gradient(135deg, #67e8f9 0%, #06b6d4 35%, #0891b2 65%, #0e7490 100%)" },
 ];
 
 const T = {
@@ -145,13 +166,13 @@ function LoginScreen({ onLogin, lang, setLang }) {
     else { setErr(true); setTimeout(()=>setErr(false),2000); }
   };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-orange-700 flex items-center justify-center p-4" dir={t.dir}>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{background:"linear-gradient(135deg,#6b2155,#4a1040,#3a0d30)"}} dir={t.dir}>
       <div className="absolute top-4 right-4">
         <button onClick={()=>setLang(lang==="ar"?"en":"ar")} className="bg-white/20 hover:bg-white/30 text-white text-sm font-bold px-4 py-2 rounded-full backdrop-blur-sm transition">🌐 {t.switchLang}</button>
       </div>
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-theme rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🔗</div>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl" style={{background:"#6b2155"}}>🔗</div>
           <h1 className="text-2xl font-extrabold text-slate-800">{t.loginTitle}</h1>
           <p className="text-slate-500 text-sm mt-2">{t.loginSub}</p>
         </div>
@@ -162,7 +183,7 @@ function LoginScreen({ onLogin, lang, setLang }) {
               className={`w-full px-4 py-3 border-2 rounded-xl text-sm focus:outline-none transition ${err?"border-red-400 bg-red-50":"border-slate-200 focus:border-theme"}`}/>
             {err && <p className="text-red-500 text-xs mt-1 font-semibold">{t.wrongPw}</p>}
           </div>
-          <button type="submit" className="w-full btn-primary font-bold py-3 rounded-xl text-sm transition shadow-md">{t.loginBtn}</button>
+          <button type="submit" style={{background:"#6b2155"}} className="w-full hover:opacity-90 text-white font-bold py-3 rounded-xl text-sm transition shadow-md">{t.loginBtn}</button>
         </form>
       </div>
     </div>
@@ -552,7 +573,7 @@ function SettingsModal({ onClose, theme, setTheme, siteSettings, setSiteSettings
           </div>
           {/* Preview */}
           <div className="rounded-xl overflow-hidden border border-slate-200">
-            <div className={`bg-gradient-to-r ${THEMES.find(th=>th.id===selTheme)?.header||THEMES[0].header} p-4 text-white`}>
+            <div style={{background: THEMES.find(th=>th.id===selTheme)?.gradient||THEMES[0].gradient}} className="p-4 text-white">
               <p className="font-extrabold text-lg">{name||t.appName}</p>
               <p className="text-white/80 text-xs mt-1">{subtitle||t.subtitle}</p>
             </div>
@@ -571,7 +592,7 @@ function App() {
   const [lang,setLang]=useState("ar");
   const [authed,setAuthed]=useState(false);
   const [role,setRole]=useState("viewer");
-  const [theme,setTheme]=useState(THEMES[0]);
+  const [theme,setTheme]=useState(THEMES[0]); // plum is default
   const [siteSettings,setSiteSettings]=useState({name:"HubSpot Filters", subtitle:""});
   const [filters,setFilters]=useState([]);
   const [loading,setLoading]=useState(true);
@@ -593,6 +614,7 @@ function App() {
     document.documentElement.style.setProperty('--clr-dark', theme.dark);
     document.documentElement.style.setProperty('--clr-light', theme.light);
     document.documentElement.style.setProperty('--clr-ring', theme.ring);
+    document.documentElement.style.setProperty('--clr-gradient', theme.gradient);
   },[theme]);
 
   useEffect(()=>{
@@ -647,7 +669,7 @@ function App() {
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-16" dir={t.dir}>
       <Toast n={notif} onClose={()=>setNotif(null)}/>
 
-      <header className={`bg-gradient-to-r ${theme.header} text-white shadow-md relative overflow-hidden`}>
+      <header style={{background: theme.gradient}} className="header-shimmer text-white shadow-lg relative overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{backgroundImage:"radial-gradient(#fff 1px,transparent 1px)",backgroundSize:"16px 16px"}}></div>
         <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12 relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
