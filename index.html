@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>مدونة فلاتر الـ CRM</title>
+  <title>HubSpot Filters</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -16,58 +16,120 @@
 </head>
 <body class="bg-slate-50">
 <div id="root"></div>
-
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
-const CATEGORIES = ["الكل", "مبيعات", "تسويق", "دعم عملاء", "أخرى"];
-const PLATFORMS  = ["الكل", "HubSpot", "Salesforce", "Zoho", "Pipedrive", "Bitrix24", "أخرى"];
+const PASSWORD   = "Saleh@Crm&Hubspot";
+const STORAGE_KEY = "hubspot_filters_v1";
+const AUTH_KEY    = "hubspot_hub_auth";
+const DEF_IMAGE   = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80";
 
-const CATEGORY_COLORS = {
-  "مبيعات":    "bg-orange-500",
-  "تسويق":     "bg-indigo-500",
-  "دعم عملاء": "bg-teal-500",
-  "أخرى":      "bg-slate-500",
+/* ── translations ── */
+const T = {
+  ar: {
+    dir:"rtl", lang:"ar", switchLang:"English",
+    appName:"HubSpot Filters",
+    subtitle:"مساحة عمل مشتركة لفريق المبيعات لإضافة وتوثيق فلاتر HubSpot وتسهيل العمل اليومي.",
+    badge:"فلاتر HubSpot 🔗",
+    addBtn:"إضافة فلتر جديد",
+    totalFilters:"إجمالي الفلاتر",
+    searchPlaceholder:"ابحث في الفلاتر...",
+    by:"بواسطة", unknown:"مجهول", recentlyAdded:"مضاف حديثاً",
+    goToFilter:"الانتقال للفلتر", copyLink:"نسخ الرابط",
+    noResults:"لم نعثر على أي فلاتر مطابقة",
+    noResultsSub:"جرب تغيير كلمات البحث أو أضف فلتراً جديداً.",
+    loading:"جاري التحميل...",
+    footerTitle:"HubSpot Filters 🚀",
+    footerSub:"البيانات محفوظة على جهازك — أي فلتر تضيفه يظهر في كل مرة تفتح الصفحة.",
+    modalTitle:"إضافة فلتر HubSpot جديد",
+    filterName:"اسم الفلتر *", filterNamePh:"مثال: العملاء المهتمين بدون متابعة",
+    filterLink:"رابط الفلتر المباشر *",
+    detailedDesc:"وصف تفصيلي *", descPh:"اشرح ماذا يظهر هذا الفلتر تحديداً وكيف يُستخدم...",
+    imageSection:"صورة توضيحية",
+    imageUpload:"📁 رفع من الجهاز", imageUrl:"🔗 رابط صورة", imageAuto:"🖼️ صورة تلقائية",
+    imageAutoMsg:"سيتم استخدام صورة مبيعات افتراضية.",
+    chooseFile:"اختر صورة من جهازك...",
+    publishBtn:"انشر وشارك مع الفريق ✨", savingBtn:"جاري الحفظ...", cancelBtn:"إلغاء",
+    fillAll:"يرجى تعبئة كافة الحقول الأساسية.",
+    published:"تم نشر الفلتر بنجاح! 🎉", copied:"تم نسخ رابط الفلتر!",
+    me:"أنت",
+    loginTitle:"HubSpot Filters", loginSub:"أدخل كلمة المرور للوصول",
+    pwLabel:"كلمة المرور", pwPh:"أدخل كلمة المرور...", loginBtn:"دخول", wrongPw:"كلمة المرور غير صحيحة",
+  },
+  en: {
+    dir:"ltr", lang:"en", switchLang:"عربي",
+    appName:"HubSpot Filters",
+    subtitle:"A shared workspace for the sales team to add and document HubSpot filters for easier daily operations.",
+    badge:"HubSpot Filters 🔗",
+    addBtn:"Add New Filter",
+    totalFilters:"Total Filters",
+    searchPlaceholder:"Search filters...",
+    by:"By", unknown:"Unknown", recentlyAdded:"Recently added",
+    goToFilter:"Go to Filter", copyLink:"Copy Link",
+    noResults:"No matching filters found",
+    noResultsSub:"Try changing your search or add a new filter.",
+    loading:"Loading...",
+    footerTitle:"HubSpot Filters 🚀",
+    footerSub:"Data is saved on your device — any filter you add will appear every time you open the page.",
+    modalTitle:"Add New HubSpot Filter",
+    filterName:"Filter Name *", filterNamePh:"e.g. Interested Contacts Without Follow-up",
+    filterLink:"Direct Filter Link *",
+    detailedDesc:"Detailed Description *", descPh:"Explain exactly what this filter shows and how it should be used...",
+    imageSection:"Thumbnail Image",
+    imageUpload:"📁 Upload from Device", imageUrl:"🔗 Image URL", imageAuto:"🖼️ Auto Image",
+    imageAutoMsg:"A default sales image will be used.",
+    chooseFile:"Choose an image from your device...",
+    publishBtn:"Publish & Share with Team ✨", savingBtn:"Saving...", cancelBtn:"Cancel",
+    fillAll:"Please fill in all required fields.",
+    published:"Filter published successfully! 🎉", copied:"Filter link copied!",
+    me:"You",
+    loginTitle:"HubSpot Filters", loginSub:"Enter password to access",
+    pwLabel:"Password", pwPh:"Enter password...", loginBtn:"Login", wrongPw:"Incorrect password",
+  }
 };
-
-const DEFAULT_IMAGES = {
-  "مبيعات":    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80",
-  "تسويق":     "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
-  "دعم عملاء": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
-  "أخرى":      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
-};
-
-const STORAGE_KEY = "crm_filters_hub_v1";
 
 const SAMPLES = [
-  {
-    id: "sample-1",
-    title: "العملاء المهتمين جداً دون تواصل منذ 3 أيام",
-    crmUrl: "https://app.hubspot.com/contacts/sample-filter-id-1",
-    description: "يظهر هذا الفلتر جميع العملاء المحتملين المصنفين كـ 'مهتم جداً' والذين لم يتم إرسال إيميل أو إجراء مكالمة معهم في آخر 3 أيام لسرعة المتابعة.",
-    category: "مبيعات", platform: "HubSpot",
-    imageUrl: DEFAULT_IMAGES["مبيعات"],
-    createdBy: "النظام", createdAt: new Date().toISOString(),
-  },
-  {
-    id: "sample-2",
-    title: "مشتركو النشرات البريدية غير النشطين للتنشيط",
-    crmUrl: "https://login.salesforce.com/sample-filter-id-2",
-    description: "قائمة تضم كافة المشتركين في النشرة الإخبارية خلال الـ 6 أشهر الماضية ولكن لم يفتحوا أي بريد إلكتروني، لاستخدامها في حملة إعادة التنشيط التسويقية.",
-    category: "تسويق", platform: "Salesforce",
-    imageUrl: DEFAULT_IMAGES["تسويق"],
-    createdBy: "النظام", createdAt: new Date().toISOString(),
-  },
+  { id:"s1", title:"العملاء المهتمين جداً دون تواصل منذ 3 أيام", crmUrl:"https://app.hubspot.com/contacts/sample-1",
+    description:"يظهر هذا الفلتر جميع العملاء المحتملين المصنفين كـ 'مهتم جداً' والذين لم يتم إرسال إيميل أو إجراء مكالمة معهم في آخر 3 أيام لسرعة المتابعة.",
+    imageUrl:DEF_IMAGE, createdBy:"النظام", createdAt:new Date().toISOString() },
+  { id:"s2", title:"صفقات مفتوحة منذ أكثر من 30 يوماً بدون نشاط", crmUrl:"https://app.hubspot.com/contacts/sample-2",
+    description:"قائمة بجميع الصفقات المفتوحة التي لم يتم تسجيل أي نشاط عليها منذ أكثر من 30 يوماً، لمتابعتها وإعادة تنشيطها.",
+    imageUrl:DEF_IMAGE, createdBy:"النظام", createdAt:new Date().toISOString() },
 ];
 
-/* ───── Toast ───── */
+/* ── Login ── */
+function LoginScreen({ onLogin, lang, setLang }) {
+  const [pw,setPw]=useState(""); const [err,setErr]=useState(false); const t=T[lang];
+  const submit = e => { e.preventDefault(); if(pw===PASSWORD) onLogin(); else { setErr(true); setTimeout(()=>setErr(false),2000); } };
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-orange-700 flex items-center justify-center p-4" dir={t.dir}>
+      <div className="absolute top-4 right-4">
+        <button onClick={()=>setLang(lang==="ar"?"en":"ar")} className="bg-white/20 hover:bg-white/30 text-white text-sm font-bold px-4 py-2 rounded-full backdrop-blur-sm transition">🌐 {t.switchLang}</button>
+      </div>
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🔗</div>
+          <h1 className="text-2xl font-extrabold text-slate-800">{t.loginTitle}</h1>
+          <p className="text-slate-500 text-sm mt-2">{t.loginSub}</p>
+        </div>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">{t.pwLabel}</label>
+            <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder={t.pwPh} dir="ltr"
+              className={`w-full px-4 py-3 border-2 rounded-xl text-sm focus:outline-none transition ${err?"border-red-400 bg-red-50":"border-slate-200 focus:border-orange-500"}`}/>
+            {err && <p className="text-red-500 text-xs mt-1 font-semibold">{t.wrongPw}</p>}
+          </div>
+          <button type="submit" className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold py-3 rounded-xl text-sm transition shadow-md">{t.loginBtn}</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ── Toast ── */
 function Toast({ n, onClose }) {
-  if (!n) return null;
-  const cls = {
-    success: "bg-emerald-50 border-emerald-200 text-emerald-800",
-    warning: "bg-amber-50  border-amber-200  text-amber-800",
-    error:   "bg-rose-50   border-rose-200   text-rose-800",
-  }[n.type];
+  if(!n) return null;
+  const cls={success:"bg-emerald-50 border-emerald-200 text-emerald-800",warning:"bg-amber-50 border-amber-200 text-amber-800",error:"bg-rose-50 border-rose-200 text-rose-800"}[n.type];
   return (
     <div className={`fixed top-4 left-4 right-4 md:left-auto md:w-96 z-50 p-4 rounded-xl shadow-lg border flex items-center gap-3 ${cls}`}>
       <div className="flex-1 text-sm font-semibold">{n.message}</div>
@@ -76,48 +138,37 @@ function Toast({ n, onClose }) {
   );
 }
 
-/* ───── Card ───── */
-function FilterCard({ filter, onCopy }) {
-  const catColor = CATEGORY_COLORS[filter.category] || "bg-slate-500";
-  const dateStr  = filter.createdAt
-    ? new Date(filter.createdAt).toLocaleDateString("ar-EG", { month: "short", day: "numeric" })
-    : "مضاف حديثاً";
-
+/* ── Card ── */
+function FilterCard({ filter, onCopy, t }) {
+  const dateStr = filter.createdAt ? new Date(filter.createdAt).toLocaleDateString(t.lang==="ar"?"ar-EG":"en-US",{month:"short",day:"numeric"}) : t.recentlyAdded;
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-slate-100 transition-all duration-200 flex flex-col group">
       <div className="relative h-48 bg-slate-100 overflow-hidden">
-        <img src={filter.imageUrl} alt={filter.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={e => { e.target.onerror = null; e.target.src = DEFAULT_IMAGES["أخرى"]; }} />
-        <div className="absolute top-3 right-3 flex gap-2">
-          <span className="bg-slate-900/80 text-white text-[10px] px-2.5 py-1 rounded-full font-bold backdrop-blur-sm">{filter.platform}</span>
-          <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold text-white ${catColor}`}>{filter.category}</span>
+        <img src={filter.imageUrl||DEF_IMAGE} alt={filter.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={e=>{e.target.onerror=null;e.target.src=DEF_IMAGE;}}/>
+        <div className="absolute top-3 right-3">
+          <span className="bg-orange-500 text-white text-[10px] px-2.5 py-1 rounded-full font-bold shadow-sm">HubSpot • Sales</span>
         </div>
       </div>
       <div className="p-5 flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="text-lg font-bold text-slate-800 line-clamp-1 mb-2 group-hover:text-blue-600 transition-colors">{filter.title}</h3>
+          <h3 className="text-lg font-bold text-slate-800 line-clamp-1 mb-2 group-hover:text-orange-500 transition-colors">{filter.title}</h3>
           <p className="text-slate-500 text-sm line-clamp-3 mb-4 leading-relaxed">{filter.description}</p>
         </div>
         <div className="pt-4 border-t border-slate-100 space-y-3">
           <div className="flex justify-between items-center text-[11px] text-slate-400">
-            <span>بواسطة: <strong className="text-slate-600">{filter.createdBy || "مجهول"}</strong></span>
+            <span>{t.by}: <strong className="text-slate-600">{filter.createdBy||t.unknown}</strong></span>
             <span>{dateStr}</span>
           </div>
           <div className="flex gap-2">
             <a href={filter.crmUrl} target="_blank" rel="noopener noreferrer"
-              className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-              الانتقال للفلتر
+              className="flex-1 bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              {t.goToFilter}
             </a>
-            <button onClick={() => onCopy(filter.crmUrl)}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-              </svg>
-              نسخ الرابط
+            <button onClick={()=>onCopy(filter.crmUrl)} className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+              {t.copyLink}
             </button>
           </div>
         </div>
@@ -126,115 +177,126 @@ function FilterCard({ filter, onCopy }) {
   );
 }
 
-/* ───── Modal ───── */
-function AddModal({ onClose, onAdd, showNotif }) {
-  const [title, setTitle]       = useState("");
-  const [crmUrl, setCrmUrl]     = useState("");
-  const [desc, setDesc]         = useState("");
-  const [category, setCategory] = useState("مبيعات");
-  const [platform, setPlatform] = useState("HubSpot");
-  const [imgType, setImgType]   = useState("default");
-  const [imgUrl, setImgUrl]     = useState("");
-  const [submitting, setSub]    = useState(false);
+/* ── Modal ── */
+function AddModal({ onClose, onAdd, showNotif, t }) {
+  const [title,setTitle]=useState("");
+  const [crmUrl,setCrmUrl]=useState("");
+  const [desc,setDesc]=useState("");
+  const [imgType,setImgType]=useState("auto");
+  const [imgUrl,setImgUrl]=useState("");
+  const [imgPreview,setImgPreview]=useState(null);
+  const [imgBase64,setImgBase64]=useState(null);
+  const [sub,setSub]=useState(false);
+  const fileRef=useRef(null);
+
+  const handleFileChange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.size > 2*1024*1024) { showNotif("warning", t.lang==="ar"?"الصورة أكبر من 2MB، اختر صورة أصغر.":"Image is larger than 2MB, please choose a smaller one."); return; }
+    const reader = new FileReader();
+    reader.onload = ev => { setImgBase64(ev.target.result); setImgPreview(ev.target.result); };
+    reader.readAsDataURL(file);
+  };
 
   const submit = async e => {
     e.preventDefault();
-    if (!title.trim() || !crmUrl.trim() || !desc.trim()) {
-      showNotif("warning", "يرجى تعبئة كافة الحقول الأساسية.");
-      return;
-    }
+    if(!title.trim()||!crmUrl.trim()||!desc.trim()){showNotif("warning",t.fillAll);return;}
     setSub(true);
-    const finalImg = (imgType === "url" && imgUrl.trim()) ? imgUrl.trim() : (DEFAULT_IMAGES[category] || DEFAULT_IMAGES["أخرى"]);
-    await onAdd({
-      id: `filter-${Date.now()}`,
-      title: title.trim(), crmUrl: crmUrl.trim(), description: desc.trim(),
-      category, platform, imageUrl: finalImg,
-      createdBy: "أنت", createdAt: new Date().toISOString(),
-    });
-    setSub(false);
-    onClose();
+    let finalImg = DEF_IMAGE;
+    if(imgType==="upload" && imgBase64) finalImg = imgBase64;
+    else if(imgType==="url" && imgUrl.trim()) finalImg = imgUrl.trim();
+    await onAdd({id:`f-${Date.now()}`,title:title.trim(),crmUrl:crmUrl.trim(),description:desc.trim(),imageUrl:finalImg,createdBy:t.me,createdAt:new Date().toISOString()});
+    setSub(false); onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
-        {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
           <div className="flex items-center gap-2">
-            <span className="p-2 bg-blue-50 text-blue-600 rounded-lg text-lg">🔗</span>
-            <h2 className="text-xl font-bold text-slate-800">مشاركة فلتر CRM جديد</h2>
+            <span className="p-2 bg-orange-50 text-orange-500 rounded-lg text-lg">🔗</span>
+            <h2 className="text-xl font-bold text-slate-800">{t.modalTitle}</h2>
           </div>
           <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        {/* Form */}
         <form onSubmit={submit} className="p-6 space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">اسم الفلتر *</label>
-              <input type="text" required value={title} onChange={e => setTitle(e.target.value)} placeholder="مثال: مبيعات كبار العملاء المفتوحة"
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">نظام الـ CRM *</label>
-              <select value={platform} onChange={e => setPlatform(e.target.value)}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
-                {["HubSpot","Salesforce","Zoho","Pipedrive","Bitrix24","أخرى"].map(p => <option key={p}>{p}</option>)}
-              </select>
-            </div>
-          </div>
 
+          {/* Filter name */}
           <div>
-            <label className="block text-xs font-bold text-slate-600 mb-1">رابط الفلتر المباشر *</label>
-            <input type="url" required value={crmUrl} onChange={e => setCrmUrl(e.target.value)} placeholder="https://..." dir="ltr"
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-left focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            <label className="block text-xs font-bold text-slate-600 mb-1">{t.filterName}</label>
+            <input type="text" required value={title} onChange={e=>setTitle(e.target.value)} placeholder={t.filterNamePh}
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 focus:outline-none"/>
           </div>
 
+          {/* CRM link */}
           <div>
-            <label className="block text-xs font-bold text-slate-600 mb-1">القسم المستهدف *</label>
-            <select value={category} onChange={e => setCategory(e.target.value)}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
-              <option value="مبيعات">المبيعات (Sales)</option>
-              <option value="تسويق">التسويق (Marketing)</option>
-              <option value="دعم عملاء">خدمة العملاء (Support)</option>
-              <option value="أخرى">أخرى</option>
-            </select>
+            <label className="block text-xs font-bold text-slate-600 mb-1">{t.filterLink}</label>
+            <input type="url" required value={crmUrl} onChange={e=>setCrmUrl(e.target.value)} placeholder="https://app.hubspot.com/..." dir="ltr"
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-left focus:ring-2 focus:ring-orange-400 focus:outline-none"/>
           </div>
 
+          {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-slate-600 mb-1">وصف تفصيلي *</label>
-            <textarea rows="3" required value={desc} onChange={e => setDesc(e.target.value)}
-              placeholder="اشرح ماذا يظهر هذا الفلتر تحديداً وكيف يُستخدم..."
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none leading-relaxed" />
+            <label className="block text-xs font-bold text-slate-600 mb-1">{t.detailedDesc}</label>
+            <textarea rows="3" required value={desc} onChange={e=>setDesc(e.target.value)} placeholder={t.descPh}
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 focus:outline-none leading-relaxed"/>
           </div>
 
+          {/* Image section */}
           <div className="border-t border-slate-100 pt-4">
-            <label className="block text-xs font-bold text-slate-700 mb-2">الصورة التوضيحية</label>
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              {[{k:"url",l:"🔗 رابط صورة مباشر"},{k:"default",l:"🖼️ صورة تلقائية"}].map(({k,l}) => (
-                <button key={k} type="button" onClick={() => setImgType(k)}
-                  className={`p-2.5 rounded-xl border text-xs font-semibold transition ${imgType===k?"border-blue-500 bg-blue-50 text-blue-700":"border-slate-200 hover:bg-slate-50"}`}>{l}</button>
+            <label className="block text-xs font-bold text-slate-700 mb-2">{t.imageSection}</label>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {[{k:"upload",l:t.imageUpload},{k:"url",l:t.imageUrl},{k:"auto",l:t.imageAuto}].map(({k,l})=>(
+                <button key={k} type="button" onClick={()=>{setImgType(k);setImgPreview(null);setImgBase64(null);setImgUrl("");}}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold transition text-center ${imgType===k?"border-orange-400 bg-orange-50 text-orange-700":"border-slate-200 hover:bg-slate-50"}`}>{l}</button>
               ))}
             </div>
-            {imgType === "url" && (
-              <input type="url" value={imgUrl} onChange={e => setImgUrl(e.target.value)} placeholder="https://example.com/image.jpg" dir="ltr"
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-xs text-left focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+
+            {/* Upload from device */}
+            {imgType==="upload" && (
+              <div>
+                <div onClick={()=>fileRef.current?.click()}
+                  className="w-full border-2 border-dashed border-slate-200 hover:border-orange-400 rounded-xl p-6 text-center cursor-pointer transition">
+                  {imgPreview ? (
+                    <img src={imgPreview} alt="preview" className="max-h-40 mx-auto rounded-lg object-cover"/>
+                  ) : (
+                    <div>
+                      <div className="text-3xl mb-2">📁</div>
+                      <p className="text-sm text-slate-500 font-medium">{t.chooseFile}</p>
+                      <p className="text-xs text-slate-400 mt-1">{t.lang==="ar"?"الحد الأقصى 2MB":"Max 2MB"}</p>
+                    </div>
+                  )}
+                </div>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange}/>
+                {imgPreview && (
+                  <button type="button" onClick={()=>{setImgPreview(null);setImgBase64(null);fileRef.current.value="";}}
+                    className="mt-2 text-xs text-red-500 hover:text-red-700 font-semibold">{t.lang==="ar"?"✕ إزالة الصورة":"✕ Remove image"}</button>
+                )}
+              </div>
             )}
-            {imgType === "default" && (
-              <p className="text-xs text-emerald-600 bg-emerald-50 p-3 rounded-lg border border-emerald-100">سيتم اختيار صورة تلقائية تناسب القسم المختار.</p>
+
+            {/* URL */}
+            {imgType==="url" && (
+              <div>
+                <input type="url" value={imgUrl} onChange={e=>setImgUrl(e.target.value)} placeholder="https://example.com/image.jpg" dir="ltr"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-xs text-left focus:ring-2 focus:ring-orange-400 focus:outline-none"/>
+                {imgUrl && <img src={imgUrl} alt="preview" className="mt-2 max-h-32 rounded-lg object-cover border border-slate-200" onError={e=>e.target.style.display="none"}/>}
+              </div>
+            )}
+
+            {/* Auto */}
+            {imgType==="auto" && (
+              <p className="text-xs text-emerald-600 bg-emerald-50 p-3 rounded-lg border border-emerald-100">{t.imageAutoMsg}</p>
             )}
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-slate-100">
-            <button type="submit" disabled={submitting}
-              className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-300 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-md">
-              {submitting ? "جاري الحفظ..." : "انشر وشارك مع زملائك ✨"}
+            <button type="submit" disabled={sub} className="flex-1 bg-orange-500 hover:bg-orange-400 disabled:bg-slate-300 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-md">
+              {sub?t.savingBtn:t.publishBtn}
             </button>
-            <button type="button" onClick={onClose}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 px-5 rounded-xl text-sm transition">إلغاء</button>
+            <button type="button" onClick={onClose} className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 px-5 rounded-xl text-sm transition">{t.cancelBtn}</button>
           </div>
         </form>
       </div>
@@ -242,123 +304,82 @@ function AddModal({ onClose, onAdd, showNotif }) {
   );
 }
 
-/* ───── Main App ───── */
+/* ── Main App ── */
 function App() {
-  const [filters, setFilters]         = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [search, setSearch]           = useState("");
-  const [selCat, setSelCat]           = useState("الكل");
-  const [selPlat, setSelPlat]         = useState("الكل");
-  const [modalOpen, setModalOpen]     = useState(false);
-  const [notif, setNotif]             = useState(null);
-  const timer = useRef(null);
+  const [lang,setLang]=useState("ar");
+  const [authed,setAuthed]=useState(false);
+  const [filters,setFilters]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [search,setSearch]=useState("");
+  const [modalOpen,setModalOpen]=useState(false);
+  const [notif,setNotif]=useState(null);
+  const timer=useRef(null);
+  const t=T[lang];
 
-  const showNotif = (type, message) => {
-    setNotif({ type, message });
-    clearTimeout(timer.current);
-    timer.current = setTimeout(() => setNotif(null), 4000);
-  };
+  const showNotif=(type,message)=>{setNotif({type,message});clearTimeout(timer.current);timer.current=setTimeout(()=>setNotif(null),4000);};
 
-  // Load from localStorage
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const data = raw ? JSON.parse(raw) : null;
-      setFilters(Array.isArray(data) && data.length ? data : SAMPLES);
-    } catch {
-      setFilters(SAMPLES);
-    }
+  useEffect(()=>{
+    if(sessionStorage.getItem(AUTH_KEY)==="1") setAuthed(true);
+    try { const raw=localStorage.getItem(STORAGE_KEY); const data=raw?JSON.parse(raw):null; setFilters(Array.isArray(data)&&data.length?data:SAMPLES); } catch { setFilters(SAMPLES); }
     setLoading(false);
-  }, []);
+  },[]);
 
-  const save = (list) => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch {}
-  };
-
-  const handleAdd = (newFilter) => {
-    const updated = [newFilter, ...filters];
-    setFilters(updated);
-    save(updated);
-    showNotif("success", "تم نشر الفلتر بنجاح! 🎉");
-  };
-
-  const copyToClipboard = (text) => {
-    navigator.clipboard?.writeText(text).then(() => {
-      showNotif("success", "تم نسخ رابط الفلتر!");
-    }).catch(() => {
-      const ta = document.createElement("textarea");
-      ta.value = text; document.body.appendChild(ta); ta.select();
-      document.execCommand("copy"); document.body.removeChild(ta);
-      showNotif("success", "تم نسخ رابط الفلتر!");
+  const handleLogin=()=>{ setAuthed(true); sessionStorage.setItem(AUTH_KEY,"1"); };
+  const save=list=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(list));}catch{}};
+  const handleAdd=f=>{const updated=[f,...filters];setFilters(updated);save(updated);showNotif("success",t.published);};
+  const copyToClipboard=text=>{
+    navigator.clipboard?.writeText(text).then(()=>showNotif("success",t.copied)).catch(()=>{
+      const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);showNotif("success",t.copied);
     });
   };
 
-  const filtered = filters.filter(f => {
-    const q = search.toLowerCase();
-    return (f.title?.toLowerCase().includes(q) || f.description?.toLowerCase().includes(q))
-      && (selCat  === "الكل" || f.category === selCat)
-      && (selPlat === "الكل" || f.platform === selPlat);
+  const filtered=filters.filter(f=>{
+    const q=search.toLowerCase();
+    return f.title?.toLowerCase().includes(q)||f.description?.toLowerCase().includes(q);
   });
 
+  if(!authed) return <LoginScreen onLogin={handleLogin} lang={lang} setLang={setLang}/>;
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 pb-16" dir="rtl">
-      <Toast n={notif} onClose={() => setNotif(null)} />
+    <div className="min-h-screen bg-slate-50 text-slate-800 pb-16" dir={t.dir}>
+      <Toast n={notif} onClose={()=>setNotif(null)}/>
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-800 text-white shadow-md relative overflow-hidden">
+      <header className="bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 text-white shadow-md relative overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{backgroundImage:"radial-gradient(#fff 1px,transparent 1px)",backgroundSize:"16px 16px"}}></div>
         <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12 relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
-              <span className="inline-block bg-white/20 text-white text-xs px-3 py-1 rounded-full font-mono backdrop-blur-sm mb-2">مشاركة الفلاتر 🔗</span>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">مدونة فلاتر الـ CRM</h1>
-              <p className="mt-2 text-blue-100 max-w-2xl text-sm sm:text-base">
-                مساحة عمل مشتركة لإضافة فلاتر CRM وتوضيح استخداماتها لتسهيل العمل اليومي للفريق.
-              </p>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="inline-block bg-white/20 text-white text-xs px-3 py-1 rounded-full font-mono backdrop-blur-sm">{t.badge}</span>
+                <button onClick={()=>setLang(lang==="ar"?"en":"ar")} className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm transition">🌐 {t.switchLang}</button>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">{t.appName}</h1>
+              <p className="mt-2 text-orange-100 max-w-2xl text-sm sm:text-base">{t.subtitle}</p>
             </div>
-            <button onClick={() => setModalOpen(true)}
-              className="bg-emerald-500 hover:bg-emerald-400 text-white font-bold px-6 py-3.5 rounded-xl transition shadow-md hover:shadow-lg flex items-center gap-2 text-sm whitespace-nowrap">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              مشاركة فلتر جديد
+            <button onClick={()=>setModalOpen(true)} className="bg-white text-orange-600 hover:bg-orange-50 font-bold px-6 py-3.5 rounded-xl transition shadow-md hover:shadow-lg flex items-center gap-2 text-sm whitespace-nowrap">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+              {t.addBtn}
             </button>
           </div>
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mt-8 text-center">
-            {[
-              {label:"إجمالي الفلاتر",  value: filters.length},
-              {label:"فلاتر مبيعات",    value: filters.filter(f=>f.category==="مبيعات").length},
-              {label:"فلاتر تسويق",     value: filters.filter(f=>f.category==="تسويق").length},
-            ].map(({label,value}) => (
-              <div key={label} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4">
-                <div className="text-2xl sm:text-3xl font-extrabold">{value}</div>
-                <div className="text-blue-200 text-xs sm:text-sm mt-1">{label}</div>
-              </div>
-            ))}
+          <div className="mt-8">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center inline-block min-w-32">
+              <div className="text-3xl font-extrabold">{filters.length}</div>
+              <div className="text-orange-100 text-sm mt-1">{t.totalFilters}</div>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Search & Filter bar */}
+      {/* Search bar */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row gap-3 items-center">
-          <div className="relative flex-1 w-full">
-            <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="relative">
+            <svg className={`absolute ${t.dir==="rtl"?"right-3":"left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
-            <input type="text" placeholder="ابحث في الفلاتر..." value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pr-10 pl-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <select value={selCat} onChange={e => setSelCat(e.target.value)}
-              className="flex-1 sm:flex-none px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
-              {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-            </select>
-            <select value={selPlat} onChange={e => setSelPlat(e.target.value)}
-              className="flex-1 sm:flex-none px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
-              {PLATFORMS.map(p => <option key={p}>{p}</option>)}
-            </select>
+            <input type="text" placeholder={t.searchPlaceholder} value={search} onChange={e=>setSearch(e.target.value)}
+              className={`w-full ${t.dir==="rtl"?"pr-10 pl-4":"pl-10 pr-4"} py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 focus:outline-none`}/>
           </div>
         </div>
       </div>
@@ -367,36 +388,36 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 text-slate-500">
-            <svg className="animate-spin h-10 w-10 text-blue-600 mb-4" viewBox="0 0 24 24" fill="none">
+            <svg className="animate-spin h-10 w-10 text-orange-500 mb-4" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
             </svg>
-            <p className="text-sm font-semibold">جاري التحميل...</p>
+            <p className="text-sm font-semibold">{t.loading}</p>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : filtered.length===0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-slate-100 shadow-sm">
             <div className="text-4xl mb-4">🔍</div>
-            <h3 className="text-lg font-bold text-slate-700 mb-1">لم نعثر على أي فلاتر مطابقة</h3>
-            <p className="text-slate-400 text-sm">جرب تغيير كلمات البحث أو أضف فلتراً جديداً.</p>
+            <h3 className="text-lg font-bold text-slate-700 mb-1">{t.noResults}</h3>
+            <p className="text-slate-400 text-sm">{t.noResultsSub}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map(f => <FilterCard key={f.id} filter={f} onCopy={copyToClipboard} />)}
+            {filtered.map(f=><FilterCard key={f.id} filter={f} onCopy={copyToClipboard} t={t}/>)}
           </div>
         )}
       </main>
 
-      {modalOpen && <AddModal onClose={() => setModalOpen(false)} onAdd={handleAdd} showNotif={showNotif} />}
+      {modalOpen && <AddModal onClose={()=>setModalOpen(false)} onAdd={handleAdd} showNotif={showNotif} t={t}/>}
 
       <footer className="text-center py-10 text-xs text-slate-400 border-t border-slate-200 bg-white mt-8">
-        <p className="font-semibold text-slate-600 mb-1">مدونة فلاتر الـ CRM 🚀</p>
-        <p>البيانات محفوظة على جهازك — أي فلتر تضيفه يظهر في كل مرة تفتح الصفحة.</p>
+        <p className="font-semibold text-slate-600 mb-1">{t.footerTitle}</p>
+        <p>{t.footerSub}</p>
       </footer>
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
