@@ -12,6 +12,22 @@
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
     .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    :root {
+      --clr: #f97316;
+      --clr-dark: #ea580c;
+      --clr-light: #fff7ed;
+      --clr-ring: #fb923c;
+    }
+    .btn-primary { background: var(--clr) !important; color: #fff !important; }
+    .btn-primary:hover { background: var(--clr-dark) !important; }
+    .btn-light { background: var(--clr-light) !important; color: var(--clr-dark) !important; }
+    .btn-light:hover { filter: brightness(0.96); }
+    .ring-theme:focus { outline: none; box-shadow: 0 0 0 2px var(--clr-ring) !important; }
+    .text-theme { color: var(--clr) !important; }
+    .border-theme { border-color: var(--clr) !important; }
+    .bg-theme { background: var(--clr) !important; }
+    .bg-theme-light { background: var(--clr-light) !important; }
+    .step-num { background: var(--clr) !important; }
   </style>
 </head>
 <body class="bg-slate-50">
@@ -23,8 +39,21 @@ const PASSWORDS   = { editor: "Saleh@HubSpot.daftra", viewer: "SalehCrm&HubSpot"
 const STORAGE_KEY = "hubspot_filters_v2";
 const AUTH_KEY    = "hubspot_hub_auth";
 const ROLE_KEY    = "hubspot_hub_role";
+const THEME_KEY   = "hubspot_theme";
+const SITE_KEY    = "hubspot_site_settings";
 const DEF_IMAGE   = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80";
-const getAutoImage = (title) => `https://ui-avatars.com/api/?name=${encodeURIComponent(title||"HubSpot")}&size=800&background=f97316&color=fff&bold=true&format=png&length=2`;
+const getAutoImage = (title, bg="f97316") => `https://ui-avatars.com/api/?name=${encodeURIComponent(title||"HubSpot")}&size=800&background=${bg}&color=fff&bold=true&format=png&length=2`;
+
+const THEMES = [
+  { id:"orange",  label:"🟠 Orange",  primary:"#f97316", dark:"#ea580c", light:"#fff7ed", ring:"#fb923c", badge:"bg-orange-500",  header:"from-orange-500 via-orange-600 to-red-600" },
+  { id:"blue",    label:"🔵 Blue",    primary:"#3b82f6", dark:"#2563eb", light:"#eff6ff", ring:"#60a5fa", badge:"bg-blue-500",    header:"from-blue-500 via-blue-600 to-blue-700" },
+  { id:"purple",  label:"🟣 Purple",  primary:"#8b5cf6", dark:"#7c3aed", light:"#f5f3ff", ring:"#a78bfa", badge:"bg-violet-500",  header:"from-violet-500 via-purple-600 to-purple-700" },
+  { id:"green",   label:"🟢 Green",   primary:"#10b981", dark:"#059669", light:"#ecfdf5", ring:"#34d399", badge:"bg-emerald-500", header:"from-emerald-500 via-emerald-600 to-teal-600" },
+  { id:"rose",    label:"🌸 Rose",    primary:"#f43f5e", dark:"#e11d48", light:"#fff1f2", ring:"#fb7185", badge:"bg-rose-500",    header:"from-rose-500 via-rose-600 to-pink-600" },
+  { id:"slate",   label:"⚫ Slate",   primary:"#475569", dark:"#334155", light:"#f8fafc", ring:"#64748b", badge:"bg-slate-500",   header:"from-slate-600 via-slate-700 to-slate-800" },
+  { id:"amber",   label:"🟡 Amber",   primary:"#f59e0b", dark:"#d97706", light:"#fffbeb", ring:"#fbbf24", badge:"bg-amber-500",   header:"from-amber-500 via-amber-600 to-orange-600" },
+  { id:"cyan",    label:"🩵 Cyan",    primary:"#06b6d4", dark:"#0891b2", light:"#ecfeff", ring:"#22d3ee", badge:"bg-cyan-500",    header:"from-cyan-500 via-cyan-600 to-blue-600" },
+];
 
 const T = {
   ar: {
@@ -56,6 +85,8 @@ const T = {
     pwLabel:"كلمة المرور", pwPh:"أدخل كلمة المرور...", loginBtn:"دخول", wrongPw:"كلمة المرور غير صحيحة",
     stepsModalTitle:"خطوات الفلتر", noSteps:"لا توجد خطوات مضافة لهذا الفلتر.", closeBtn:"إغلاق",
     cardImage:"صورة الكارت",
+    settingsTitle:"إعدادات الموقع", themeColor:"لون الموقع", siteName:"اسم الموقع", siteSubtitle:"وصف الموقع", saveSettings:"حفظ الإعدادات", settingsSaved:"تم حفظ الإعدادات ✅",
+    settingsBtn:"⚙️ الإعدادات",
   },
   en: {
     dir:"ltr", lang:"en", switchLang:"عربي",
@@ -86,6 +117,8 @@ const T = {
     pwLabel:"Password", pwPh:"Enter password...", loginBtn:"Login", wrongPw:"Incorrect password",
     stepsModalTitle:"Filter Steps", noSteps:"No steps added for this filter.", closeBtn:"Close",
     cardImage:"Card Image",
+    settingsTitle:"Site Settings", themeColor:"Site Color", siteName:"Site Name", siteSubtitle:"Site Description", saveSettings:"Save Settings", settingsSaved:"Settings saved ✅",
+    settingsBtn:"⚙️ Settings",
   }
 };
 
@@ -118,7 +151,7 @@ function LoginScreen({ onLogin, lang, setLang }) {
       </div>
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🔗</div>
+          <div className="w-16 h-16 bg-theme rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🔗</div>
           <h1 className="text-2xl font-extrabold text-slate-800">{t.loginTitle}</h1>
           <p className="text-slate-500 text-sm mt-2">{t.loginSub}</p>
         </div>
@@ -126,24 +159,11 @@ function LoginScreen({ onLogin, lang, setLang }) {
           <div>
             <label className="block text-xs font-bold text-slate-600 mb-1">{t.pwLabel}</label>
             <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder={t.pwPh} dir="ltr"
-              className={`w-full px-4 py-3 border-2 rounded-xl text-sm focus:outline-none transition ${err?"border-red-400 bg-red-50":"border-slate-200 focus:border-orange-500"}`}/>
+              className={`w-full px-4 py-3 border-2 rounded-xl text-sm focus:outline-none transition ${err?"border-red-400 bg-red-50":"border-slate-200 focus:border-theme"}`}/>
             {err && <p className="text-red-500 text-xs mt-1 font-semibold">{t.wrongPw}</p>}
           </div>
-          <button type="submit" className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold py-3 rounded-xl text-sm transition shadow-md">{t.loginBtn}</button>
+          <button type="submit" className="w-full btn-primary font-bold py-3 rounded-xl text-sm transition shadow-md">{t.loginBtn}</button>
         </form>
-        {/* Role hint */}
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
-            <div className="text-lg mb-1">👁️</div>
-            <p className="text-xs font-bold text-blue-700">Viewer</p>
-            <p className="text-[10px] text-blue-500">{t.lang==="ar"?"عرض فقط":"View only"}</p>
-          </div>
-          <div className="bg-orange-50 rounded-xl p-3 text-center border border-orange-100">
-            <div className="text-lg mb-1">✏️</div>
-            <p className="text-xs font-bold text-orange-700">Editor</p>
-            <p className="text-[10px] text-orange-500">{t.lang==="ar"?"صلاحية كاملة":"Full access"}</p>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -169,7 +189,7 @@ function DeleteConfirm({ filter, onConfirm, onCancel, t }) {
         <div className="text-4xl mb-3">🗑️</div>
         <h3 className="text-lg font-bold text-slate-800 mb-2">{t.deleteFilter}</h3>
         <p className="text-slate-500 text-sm mb-1">{t.confirmDelete}</p>
-        <p className="text-orange-600 font-bold text-sm mb-5 line-clamp-1">"{filter.title}"</p>
+        <p className="text-theme font-bold text-sm mb-5 line-clamp-1">"{filter.title}"</p>
         <div className="flex gap-3">
           <button onClick={onConfirm} className="flex-1 bg-red-500 hover:bg-red-400 text-white font-bold py-2.5 rounded-xl text-sm transition">{t.yes}</button>
           <button onClick={onCancel} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-sm transition">{t.no}</button>
@@ -186,7 +206,7 @@ function StepsModal({ filter, onClose, t }) {
       <div className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100" dir={t.dir}>
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
           <div className="flex items-center gap-2">
-            <span className="p-2 bg-orange-50 text-orange-500 rounded-lg text-lg">📋</span>
+            <span className="p-2 bg-theme-light text-theme rounded-lg text-lg">📋</span>
             <div>
               <h2 className="text-lg font-bold text-slate-800">{t.stepsModalTitle}</h2>
               <p className="text-xs text-slate-400 line-clamp-1">{filter.title}</p>
@@ -202,7 +222,7 @@ function StepsModal({ filter, onClose, t }) {
             <div className="space-y-3">
               {filter.steps.map((step,i) => (
                 <div key={i} className="flex gap-3 items-start">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-extrabold flex items-center justify-center mt-0.5">{i+1}</div>
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-theme text-white text-xs font-extrabold flex items-center justify-center mt-0.5">{i+1}</div>
                   <div className="flex-1 bg-slate-50 rounded-xl px-4 py-3 text-sm text-slate-700 leading-relaxed border border-slate-100">{step}</div>
                 </div>
               ))}
@@ -211,7 +231,7 @@ function StepsModal({ filter, onClose, t }) {
             <div className="text-center py-8 text-slate-400"><div className="text-4xl mb-2">📭</div><p className="text-sm">{t.noSteps}</p></div>
           )}
           <a href={filter.crmUrl} target="_blank" rel="noopener noreferrer"
-            className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold py-3 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+            className="w-full btn-primary font-bold py-3 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
             {t.goToFilter}
           </a>
@@ -234,7 +254,7 @@ function FilterCard({ filter, onCopy, onViewSteps, onEdit, onDelete, t }) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={e=>{e.target.onerror=null;e.target.src=DEF_IMAGE;}}/>
         <div className="absolute top-3 right-3">
-          <span className="bg-orange-500 text-white text-[10px] px-2.5 py-1 rounded-full font-bold shadow-sm">HubSpot • Sales</span>
+          <span className="bg-theme text-white text-[10px] px-2.5 py-1 rounded-full font-bold shadow-sm">HubSpot • Sales</span>
         </div>
         {hasSteps && (
           <div className="absolute top-3 left-3">
@@ -266,7 +286,7 @@ function FilterCard({ filter, onCopy, onViewSteps, onEdit, onDelete, t }) {
       </div>
       <div className="p-5 flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="text-lg font-bold text-slate-800 line-clamp-1 mb-2 group-hover:text-orange-500 transition-colors">{filter.title}</h3>
+          <h3 className="text-lg font-bold text-slate-800 line-clamp-1 mb-2 group-hover:text-theme transition-colors">{filter.title}</h3>
           <p className="text-slate-500 text-sm line-clamp-3 mb-4 leading-relaxed">{filter.description}</p>
         </div>
         <div className="pt-4 border-t border-slate-100 space-y-3">
@@ -280,7 +300,7 @@ function FilterCard({ filter, onCopy, onViewSteps, onEdit, onDelete, t }) {
           </button>
           <div className="flex gap-2">
             <a href={filter.crmUrl} target="_blank" rel="noopener noreferrer"
-              className="flex-1 bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+              className="flex-1 btn-light font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
               {t.goToFilter}
             </a>
@@ -358,7 +378,7 @@ function FilterForm({ onClose, onSave, showNotif, t, existingFilter }) {
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
           <div className="flex items-center gap-2">
-            <span className="p-2 bg-orange-50 text-orange-500 rounded-lg text-lg">{isEdit?"✏️":"🔗"}</span>
+            <span className="p-2 bg-theme-light text-theme rounded-lg text-lg">{isEdit?"✏️":"🔗"}</span>
             <h2 className="text-xl font-bold text-slate-800">{isEdit ? t.editModalTitle : t.modalTitle}</h2>
           </div>
           <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition">
@@ -370,17 +390,17 @@ function FilterForm({ onClose, onSave, showNotif, t, existingFilter }) {
           <div>
             <label className="block text-xs font-bold text-slate-600 mb-1">{t.filterName}</label>
             <input type="text" required value={title} onChange={e=>setTitle(e.target.value)} placeholder={t.filterNamePh}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 focus:outline-none"/>
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm ring-theme focus:outline-none"/>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-600 mb-1">{t.filterLink}</label>
             <input type="url" required value={crmUrl} onChange={e=>setCrmUrl(e.target.value)} placeholder="https://app.hubspot.com/..." dir="ltr"
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-left focus:ring-2 focus:ring-orange-400 focus:outline-none"/>
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-left ring-theme focus:outline-none"/>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-600 mb-1">{t.detailedDesc}</label>
             <textarea rows="3" required value={desc} onChange={e=>setDesc(e.target.value)} placeholder={t.descPh}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 focus:outline-none leading-relaxed"/>
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm ring-theme focus:outline-none leading-relaxed"/>
           </div>
 
           {/* Steps */}
@@ -388,9 +408,9 @@ function FilterForm({ onClose, onSave, showNotif, t, existingFilter }) {
             <label className="block text-sm font-bold text-blue-800">📋 {t.stepsTitle}</label>
             {steps.map((step,i) => (
               <div key={i} className="flex gap-2 items-start">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center mt-2.5">{i+1}</div>
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-theme text-white text-xs font-bold flex items-center justify-center mt-2.5">{i+1}</div>
                 <input type="text" value={step} onChange={e=>updateStep(i,e.target.value)} placeholder={t.stepPh}
-                  className="flex-1 px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 focus:outline-none bg-white"/>
+                  className="flex-1 px-3 py-2.5 border border-slate-200 rounded-xl text-sm ring-theme focus:outline-none bg-white"/>
                 {steps.length > 1 && (
                   <button type="button" onClick={()=>removeStep(i)} className="mt-2 text-red-400 hover:text-red-600 text-xs font-bold px-2 py-1 rounded-lg hover:bg-red-50 transition whitespace-nowrap">{t.removeStep}</button>
                 )}
@@ -410,12 +430,12 @@ function FilterForm({ onClose, onSave, showNotif, t, existingFilter }) {
               <div className="grid grid-cols-3 gap-2 mb-3">
                 {[{k:"none",l:"—"},{k:"upload",l:t.imageUpload},{k:"url",l:t.imageUrl}].map(({k,l})=>(
                   <button key={k} type="button" onClick={()=>{setStepsImgType(k);setStepsImgBase64(null);setStepsImgUrl("");}}
-                    className={`p-2 rounded-xl border text-xs font-semibold transition text-center ${stepsImgType===k?"border-orange-400 bg-orange-50 text-orange-700":"border-slate-200 hover:bg-slate-50 bg-white"}`}>{l}</button>
+                    className={`p-2 rounded-xl border text-xs font-semibold transition text-center ${stepsImgType===k?"border-theme bg-theme-light text-theme":"border-slate-200 hover:bg-slate-50 bg-white"}`}>{l}</button>
                 ))}
               </div>
               {stepsImgType==="upload" && (
                 <div>
-                  <div onClick={()=>stepsFileRef.current?.click()} className="w-full border-2 border-dashed border-slate-200 hover:border-orange-400 rounded-xl p-4 text-center cursor-pointer transition">
+                  <div onClick={()=>stepsFileRef.current?.click()} className="w-full border-2 border-dashed border-slate-200 hover:border-theme rounded-xl p-4 text-center cursor-pointer transition">
                     {stepsImgBase64 ? <img src={stepsImgBase64} className="max-h-32 mx-auto rounded-lg object-contain"/> : <p className="text-sm text-slate-400">{t.chooseFile}</p>}
                   </div>
                   <input ref={stepsFileRef} type="file" accept="image/*" className="hidden" onChange={e=>handleFileChange(e,true)}/>
@@ -423,7 +443,7 @@ function FilterForm({ onClose, onSave, showNotif, t, existingFilter }) {
               )}
               {stepsImgType==="url" && (
                 <input type="url" value={stepsImgUrl} onChange={e=>setStepsImgUrl(e.target.value)} placeholder="https://example.com/screenshot.png" dir="ltr"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-left focus:ring-2 focus:ring-orange-400 focus:outline-none"/>
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-left ring-theme focus:outline-none"/>
               )}
             </div>
           </div>
@@ -440,7 +460,7 @@ function FilterForm({ onClose, onSave, showNotif, t, existingFilter }) {
             <div className="grid grid-cols-3 gap-2 mb-3">
               {[{k:"auto",l:t.imageAuto},{k:"upload",l:t.imageUpload},{k:"url",l:t.imageUrl}].map(({k,l})=>(
                 <button key={k} type="button" onClick={()=>{setImgType(k);setImgBase64(null);setImgUrl("");}}
-                  className={`p-2.5 rounded-xl border text-xs font-semibold transition text-center ${imgType===k?"border-orange-400 bg-orange-50 text-orange-700":"border-slate-200 hover:bg-slate-50"}`}>{l}</button>
+                  className={`p-2.5 rounded-xl border text-xs font-semibold transition text-center ${imgType===k?"border-theme bg-theme-light text-theme":"border-slate-200 hover:bg-slate-50"}`}>{l}</button>
               ))}
             </div>
             {imgType==="auto" && (
@@ -451,7 +471,7 @@ function FilterForm({ onClose, onSave, showNotif, t, existingFilter }) {
             )}
             {imgType==="upload" && (
               <div>
-                <div onClick={()=>fileRef.current?.click()} className="w-full border-2 border-dashed border-slate-200 hover:border-orange-400 rounded-xl p-5 text-center cursor-pointer transition">
+                <div onClick={()=>fileRef.current?.click()} className="w-full border-2 border-dashed border-slate-200 hover:border-theme rounded-xl p-5 text-center cursor-pointer transition">
                   {imgBase64 ? <img src={imgBase64} className="max-h-36 mx-auto rounded-lg object-cover"/> : <p className="text-sm text-slate-400">{t.chooseFile}</p>}
                 </div>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e=>handleFileChange(e,false)}/>
@@ -459,12 +479,12 @@ function FilterForm({ onClose, onSave, showNotif, t, existingFilter }) {
             )}
             {imgType==="url" && (
               <input type="url" value={imgUrl} onChange={e=>setImgUrl(e.target.value)} placeholder="https://example.com/image.jpg" dir="ltr"
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-xs text-left focus:ring-2 focus:ring-orange-400 focus:outline-none"/>
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-xs text-left ring-theme focus:outline-none"/>
             )}
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-slate-100">
-            <button type="submit" disabled={sub} className="flex-1 bg-orange-500 hover:bg-orange-400 disabled:bg-slate-300 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-md">
+            <button type="submit" disabled={sub} className="flex-1 btn-primary disabled:bg-slate-300 font-bold py-3 px-4 rounded-xl text-sm transition shadow-md">
               {sub ? t.savingBtn : isEdit ? t.saveEditBtn : t.publishBtn}
             </button>
             <button type="button" onClick={onClose} className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 px-5 rounded-xl text-sm transition">{t.cancelBtn}</button>
@@ -475,17 +495,91 @@ function FilterForm({ onClose, onSave, showNotif, t, existingFilter }) {
   );
 }
 
+/* ── Settings Modal (Editor only) ── */
+function SettingsModal({ onClose, theme, setTheme, siteSettings, setSiteSettings, showNotif, t }) {
+  const [name, setName] = useState(siteSettings.name);
+  const [subtitle, setSubtitle] = useState(siteSettings.subtitle);
+  const [selTheme, setSelTheme] = useState(theme.id);
+
+  const save = () => {
+    const newTheme = THEMES.find(th=>th.id===selTheme) || THEMES[0];
+    const newSettings = { name: name.trim()||t.appName, subtitle: subtitle.trim()||t.subtitle };
+    setTheme(newTheme);
+    setSiteSettings(newSettings);
+    try { localStorage.setItem(THEME_KEY, selTheme); localStorage.setItem(SITE_KEY, JSON.stringify(newSettings)); } catch {}
+    showNotif("success", t.settingsSaved);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100" dir={t.dir}>
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">⚙️</span>
+            <h2 className="text-xl font-bold text-slate-800">{t.settingsTitle}</h2>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div className="p-6 space-y-6">
+          {/* Site name */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">{t.siteName}</label>
+            <input type="text" value={name} onChange={e=>setName(e.target.value)}
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:outline-none" style={{focusRingColor: theme.primary}}/>
+          </div>
+          {/* Site subtitle */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">{t.siteSubtitle}</label>
+            <textarea rows="2" value={subtitle} onChange={e=>setSubtitle(e.target.value)}
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:outline-none leading-relaxed"/>
+          </div>
+          {/* Color picker */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-3">{t.themeColor}</label>
+            <div className="grid grid-cols-4 gap-2">
+              {THEMES.map(th => (
+                <button key={th.id} type="button" onClick={()=>setSelTheme(th.id)}
+                  className={`p-3 rounded-xl border-2 text-xs font-bold transition flex flex-col items-center gap-1.5 ${selTheme===th.id?"border-slate-400 shadow-md":"border-slate-100 hover:border-slate-300"}`}>
+                  <div className="w-8 h-8 rounded-full shadow-sm" style={{background:th.primary}}></div>
+                  <span className="text-slate-600 text-[10px]">{th.label.split(" ")[1]}</span>
+                  {selTheme===th.id && <span className="text-[10px] font-extrabold" style={{color:th.primary}}>✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Preview */}
+          <div className="rounded-xl overflow-hidden border border-slate-200">
+            <div className={`bg-gradient-to-r ${THEMES.find(th=>th.id===selTheme)?.header||THEMES[0].header} p-4 text-white`}>
+              <p className="font-extrabold text-lg">{name||t.appName}</p>
+              <p className="text-white/80 text-xs mt-1">{subtitle||t.subtitle}</p>
+            </div>
+          </div>
+          <button onClick={save} className="w-full text-white font-bold py-3 rounded-xl text-sm transition shadow-md" style={{background: THEMES.find(th=>th.id===selTheme)?.primary||theme.primary}}>
+            {t.saveSettings}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main App ── */
 function App() {
   const [lang,setLang]=useState("ar");
   const [authed,setAuthed]=useState(false);
-  const [role,setRole]=useState("viewer"); // "viewer" or "editor"
+  const [role,setRole]=useState("viewer");
+  const [theme,setTheme]=useState(THEMES[0]);
+  const [siteSettings,setSiteSettings]=useState({name:"HubSpot Filters", subtitle:""});
   const [filters,setFilters]=useState([]);
   const [loading,setLoading]=useState(true);
   const [search,setSearch]=useState("");
   const [formFilter,setFormFilter]=useState(null);
   const [stepsFilter,setStepsFilter]=useState(null);
   const [deleteFilter,setDeleteFilter]=useState(null);
+  const [settingsOpen,setSettingsOpen]=useState(false);
   const [notif,setNotif]=useState(null);
   const timer=useRef(null);
   const t=T[lang];
@@ -493,12 +587,26 @@ function App() {
 
   const showNotif=(type,message)=>{setNotif({type,message});clearTimeout(timer.current);timer.current=setTimeout(()=>setNotif(null),4000);};
 
+  // Update CSS variables whenever theme changes
+  useEffect(()=>{
+    document.documentElement.style.setProperty('--clr', theme.primary);
+    document.documentElement.style.setProperty('--clr-dark', theme.dark);
+    document.documentElement.style.setProperty('--clr-light', theme.light);
+    document.documentElement.style.setProperty('--clr-ring', theme.ring);
+  },[theme]);
+
   useEffect(()=>{
     if(sessionStorage.getItem(AUTH_KEY)==="1") {
       setAuthed(true);
       setRole(sessionStorage.getItem(ROLE_KEY)||"viewer");
     }
-    try { const raw=localStorage.getItem(STORAGE_KEY); const data=raw?JSON.parse(raw):null; setFilters(Array.isArray(data)&&data.length?data:SAMPLES); } catch { setFilters(SAMPLES); }
+    try {
+      const raw=localStorage.getItem(STORAGE_KEY); const data=raw?JSON.parse(raw):null; setFilters(Array.isArray(data)&&data.length?data:SAMPLES);
+      const savedThemeId = localStorage.getItem(THEME_KEY);
+      if(savedThemeId) { const th=THEMES.find(t=>t.id===savedThemeId); if(th) setTheme(th); }
+      const savedSite = localStorage.getItem(SITE_KEY);
+      if(savedSite) setSiteSettings(JSON.parse(savedSite));
+    } catch { setFilters(SAMPLES); }
     setLoading(false);
   },[]);
 
@@ -532,28 +640,30 @@ function App() {
 
   if(!authed) return <LoginScreen onLogin={handleLogin} lang={lang} setLang={setLang}/>;
 
+  const siteName = siteSettings.name || t.appName;
+  const siteSubtitle = siteSettings.subtitle || t.subtitle;
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-16" dir={t.dir}>
       <Toast n={notif} onClose={()=>setNotif(null)}/>
 
-      <header className="bg-gradient-to-r from-orange-500 via-orange-600 to-red-600 text-white shadow-md relative overflow-hidden">
+      <header className={`bg-gradient-to-r ${theme.header} text-white shadow-md relative overflow-hidden`}>
         <div className="absolute inset-0 opacity-10" style={{backgroundImage:"radial-gradient(#fff 1px,transparent 1px)",backgroundSize:"16px 16px"}}></div>
         <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12 relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="inline-block bg-white/20 text-white text-xs px-3 py-1 rounded-full font-mono backdrop-blur-sm">{t.badge}</span>
                 <button onClick={()=>setLang(lang==="ar"?"en":"ar")} className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm transition">🌐 {t.switchLang}</button>
-                {/* Role badge */}
-                <span className={`text-xs font-bold px-3 py-1 rounded-full ${isEditor?"bg-orange-300/30 text-orange-100":"bg-blue-300/30 text-blue-100"}`}>
-                  {isEditor ? "✏️ Editor" : "👁️ Viewer"}
-                </span>
+                {isEditor && (
+                  <button onClick={()=>setSettingsOpen(true)} className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm transition">{t.settingsBtn}</button>
+                )}
               </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">{t.appName}</h1>
-              <p className="mt-2 text-orange-100 max-w-2xl text-sm sm:text-base">{t.subtitle}</p>
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">{siteName}</h1>
+              <p className="mt-2 text-white/80 max-w-2xl text-sm sm:text-base">{siteSubtitle}</p>
             </div>
             {isEditor && (
-              <button onClick={()=>setFormFilter(false)} className="bg-white text-orange-600 hover:bg-orange-50 font-bold px-6 py-3.5 rounded-xl transition shadow-md hover:shadow-lg flex items-center gap-2 text-sm whitespace-nowrap">
+              <button onClick={()=>setFormFilter(false)} className="bg-white font-bold px-6 py-3.5 rounded-xl transition shadow-md hover:shadow-lg flex items-center gap-2 text-sm whitespace-nowrap" style={{color:theme.primary}}>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
                 {t.addBtn}
               </button>
@@ -562,7 +672,7 @@ function App() {
           <div className="mt-8">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center inline-block min-w-32">
               <div className="text-3xl font-extrabold">{filters.length}</div>
-              <div className="text-orange-100 text-sm mt-1">{t.totalFilters}</div>
+              <div className="text-white/70 text-sm mt-1">{t.totalFilters}</div>
             </div>
           </div>
         </div>
@@ -575,7 +685,7 @@ function App() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
             <input type="text" placeholder={t.searchPlaceholder} value={search} onChange={e=>setSearch(e.target.value)}
-              className={`w-full ${t.dir==="rtl"?"pr-10 pl-4":"pl-10 pr-4"} py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 focus:outline-none`}/>
+              className={`w-full ${t.dir==="rtl"?"pr-10 pl-4":"pl-10 pr-4"} py-2.5 border border-slate-200 rounded-xl text-sm ring-theme focus:outline-none`}/>
           </div>
         </div>
       </div>
@@ -583,7 +693,7 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 text-slate-500">
-            <svg className="animate-spin h-10 w-10 text-orange-500 mb-4" viewBox="0 0 24 24" fill="none">
+            <svg className="animate-spin h-10 w-10 text-theme mb-4" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
             </svg>
@@ -614,6 +724,7 @@ function App() {
       )}
       {stepsFilter && <StepsModal filter={stepsFilter} onClose={()=>setStepsFilter(null)} t={t}/>}
       {deleteFilter && <DeleteConfirm filter={deleteFilter} onConfirm={()=>handleDelete(deleteFilter)} onCancel={()=>setDeleteFilter(null)} t={t}/>}
+      {settingsOpen && <SettingsModal onClose={()=>setSettingsOpen(false)} theme={theme} setTheme={setTheme} siteSettings={siteSettings} setSiteSettings={setSiteSettings} showNotif={showNotif} t={t}/>}
 
       <footer className="text-center py-10 text-xs text-slate-400 border-t border-slate-200 bg-white mt-8">
         <p className="font-semibold text-slate-600 mb-1">{t.footerTitle}</p>
